@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Íris · Fluxo de clientes</title>
+<style>
+  :root { --fundo:#f5f2ef; --card:#ffffff; --texto:#2a2627; --suave:#857c78; --marca:#8c4a5a; --marca2:#d9a8b4;
+          --regua:#b9aca6; --ok:#2e7d4f; --ruim:#b3412f; --linha:#ebe5e1; --chip:#f3eeeb; --calor:140,74,90; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --fundo:#181516; --card:#231f20;
+          --texto:#efe9e6; --suave:#a39a96; --marca:#d68ea0; --marca2:#7a4654; --regua:#5f5552; --linha:#352f30;
+          --chip:#2c2728; --calor:214,142,160; } }
+  * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--fundo); color:var(--texto);
+         font:15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .topo { max-width:1180px; margin:auto; padding:28px 16px 10px; display:flex; justify-content:space-between;
+          align-items:flex-end; flex-wrap:wrap; gap:10px; }
+  .marca { font-size:12px; letter-spacing:3px; color:var(--marca); font-weight:700; }
+  h1 { margin:2px 0 0; font-size:24px; font-weight:650; }
+  h2 { margin:0; font-size:18px; font-weight:650; }
+  .sub { color:var(--suave); font-size:13px; }
+  main { max-width:1180px; margin:auto; padding:8px 16px 40px; display:grid; gap:18px; }
+  .card, .loja { background:var(--card); border-radius:16px; padding:22px; box-shadow:0 1px 2px rgba(0,0,0,.05);
+                 min-width:0; }
+  .cab { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .nome { font-size:19px; font-weight:650; letter-spacing:.3px; }
+  .fonte { color:var(--suave); font-size:12px; margin-left:8px; font-weight:400; }
+  .status { display:inline-flex; align-items:center; gap:7px; font-size:13px; padding:5px 12px; border-radius:99px;
+            background:var(--chip); white-space:nowrap; }
+  .status i, .ponto { width:8px; height:8px; border-radius:50%; background:var(--ok); display:inline-block;
+            box-shadow:0 0 0 3px rgba(46,125,79,.18); flex:none; }
+  .status.ruim i, .ponto.ruim { background:var(--ruim); box-shadow:0 0 0 3px rgba(179,65,47,.18); }
+  .ponto.cal { background:#c99a2e; box-shadow:0 0 0 3px rgba(201,154,46,.2); }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin:16px 0 4px; }
+  .kpi b span { font-size:inherit; }
+  .kpi b span.sub { color:var(--suave); }
+  .kpi { background:var(--chip); border-radius:12px; padding:12px 14px; min-width:0; }
+  .kpi b { display:block; font-size:28px; font-weight:650; line-height:1.15; font-variant-numeric:tabular-nums;
+           overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .kpi span { color:var(--suave); font-size:12px; }
+  .kpi.principal b { color:var(--marca); }
+  .sobe { color:var(--ok); } .desce { color:var(--ruim); }
+  .aviso { background:#fff4d6; color:#6b5200; border-radius:10px; padding:9px 12px; font-size:13px; margin-top:12px; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .aviso { background:#3d3215; color:#f0dfa6; } }
+  .bloco { margin-top:20px; min-width:0; }
+  .titulo { font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--suave); margin-bottom:8px; }
+  .grafico { display:flex; align-items:flex-end; gap:5px; height:150px; border-bottom:1px solid var(--linha);
+             position:relative; }
+  .grafico.dias { height:170px; padding-top:18px; }
+  .grafico.dias .hora, .eixo.dias div { max-width:64px; }
+  .grafico.dias .hora b { position:absolute; top:-17px; left:0; right:0; text-align:center; font-size:11px;
+                          font-weight:600; color:var(--suave); font-variant-numeric:tabular-nums; }
+  .hora { flex:1; display:flex; gap:2px; align-items:flex-end; height:100%; position:relative; min-width:0; }
+  .barra { flex:1; border-radius:3px 3px 0 0; min-height:0; background:var(--marca); }
+  .barra.e { background:var(--marca2); } .barra.r { background:var(--regua); }
+  .barra.fim { background:var(--marca2); }
+  .hora:hover::after { content:attr(data-dica); position:absolute; bottom:100%; left:50%; transform:translateX(-50%);
+             background:var(--texto); color:var(--card); font-size:12px; padding:4px 8px; border-radius:6px;
+             white-space:nowrap; z-index:3; pointer-events:none; }
+  .vazio-graf { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                color:var(--suave); font-size:13px; }
+  .eixo { display:flex; gap:5px; font-size:11px; color:var(--suave); margin-top:4px; }
+  .eixo div { flex:1; text-align:center; min-width:0; overflow:hidden; }
+  .legenda { font-size:12px; color:var(--suave); margin-top:8px; display:flex; gap:14px; flex-wrap:wrap; }
+  .legenda i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:5px; vertical-align:-1px; }
+  .baixo { display:grid; grid-template-columns: 1fr 1.25fr; gap:22px; }
+  @media (max-width: 760px) { .baixo { grid-template-columns: 1fr; } .loja, .card { padding:16px; } }
+  .rolar { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  table { width:100%; border-collapse:collapse; font-size:14px; font-variant-numeric:tabular-nums; }
+  th, td { padding:8px 6px; border-bottom:1px solid var(--linha); text-align:right; white-space:nowrap; }
+  th:first-child, td:first-child { text-align:left; }
+  th { color:var(--suave); font-weight:500; font-size:12px; }
+  tr.clicavel { cursor:pointer; } tr.clicavel:hover td { background:var(--chip); }
+  td .ponto { margin-right:8px; vertical-align:1px; }
+  .fora td { color:var(--suave); }
+  .calor { border-collapse:separate; border-spacing:3px; font-size:12px; }
+  .calor td, .calor th { border:0; padding:0; text-align:center; }
+  .calor td.q { height:30px; min-width:34px; border-radius:5px; font-variant-numeric:tabular-nums; }
+  .calor td:first-child, .calor th:first-child { text-align:left; padding-right:8px; font-size:13px; }
+  .abas { display:inline-flex; background:var(--chip); border-radius:99px; padding:3px; gap:2px; }
+  .abas button { border:0; background:none; color:var(--suave); font:inherit; font-size:13px; padding:5px 12px;
+                 border-radius:99px; cursor:pointer; }
+  .abas button.ativa { background:var(--card); color:var(--texto); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+  .botao { border:1px solid var(--linha); background:var(--card); color:var(--texto); font:inherit; font-size:13px;
+           padding:7px 14px; border-radius:99px; cursor:pointer; }
+  .botao:hover { background:var(--chip); }
+  .visao img { width:100%; border-radius:12px; display:block; }
+  .nota { color:var(--suave); font-size:12px; margin-top:6px; }
+  .vazio { color:var(--suave); font-size:13px; padding:28px 12px; text-align:center; background:var(--chip);
+           border-radius:12px; }
+  details.loja > summary { list-style:none; cursor:pointer; }
+  details.loja > summary::-webkit-details-marker { display:none; }
+  .resumo { display:flex; align-items:center; gap:14px; flex-wrap:wrap; justify-content:space-between; }
+  .resumo .num { font-size:22px; font-weight:650; color:var(--marca); font-variant-numeric:tabular-nums; }
+  .seta { color:var(--suave); font-size:13px; transition:transform .2s; display:inline-block; }
+  details[open] .seta { transform:rotate(90deg); }
+  .selo { font-size:11px; padding:2px 8px; border-radius:99px; background:var(--chip); color:var(--suave);
+          margin-left:8px; font-weight:500; vertical-align:2px; }
+  .entrar { display:flex; justify-content:center; padding:48px 16px; }
+  .caixa { background:var(--card); border-radius:16px; padding:28px; width:100%; max-width:360px; display:grid; gap:12px;
+           box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .caixa input[type=password] { font-size:16px; padding:11px 12px; border-radius:10px; border:1px solid var(--linha);
+           background:var(--fundo); color:var(--texto); }
+  .caixa button { font-size:16px; padding:11px; border:0; border-radius:10px; background:var(--marca); color:#fff;
+           font-weight:600; }
+  .erro { color:var(--ruim); font-size:13px; min-height:1em; }
+  #sair { background:none; border:0; color:var(--suave); font-size:13px; text-decoration:underline; cursor:pointer; }
+  footer { max-width:1180px; margin:auto; padding:0 16px 30px; color:var(--suave); font-size:12px; }
+</style>
+</head>
+<body>
+<div class="topo">
+  <div><div class="marca">LIEBE · ÍRIS</div><h1>Fluxo de clientes nas lojas</h1></div>
+  <div class="sub"><span id="agora"></span> <button id="sair" hidden>sair</button></div>
+</div>
+<div id="entrar" class="entrar" hidden>
+  <form id="form" class="caixa">
+    <div class="marca">LIEBE · ÍRIS</div>
+    <div class="nome">Acesso restrito</div>
+    <div class="sub">Informe a senha para ver o fluxo de clientes das lojas.</div>
+    <input id="senha" type="password" placeholder="Senha" autocomplete="current-password">
+    <label class="sub"><input id="lembrar" type="checkbox" checked> Lembrar neste aparelho</label>
+    <button type="submit">Entrar</button>
+    <div id="erro" class="erro"></div>
+  </form>
+</div>
+<main id="lojas" hidden></main>
+<footer id="rodape" hidden>Contagem automática por câmera, atualizada a cada 10 minutos. Só os números são guardados; a imagem de
+conferência é substituída a cada atualização. Lojas em calibração ou sem câmera na porta não entram no total da rede.</footer>
+<script>
+const PUBLICO = location.hostname.endsWith("github.io");
+const HORAS = Array.from({length: 15}, (_, i) => String(i + 8).padStart(2, "0") + ":00");   // 08h às 22h
+const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = n => Number(n || 0).toLocaleString("pt-BR");
+const dia = d => d.slice(8, 10) + "/" + d.slice(5, 7);
+const semana = d => SEMANA[new Date(d + "T12:00:00").getDay()];
+const soma = (o, i) => Object.values(o || {}).reduce((a, x) => a + (x[i] || 0), 0);
+const v = (o, h, i) => ((o || {})[h] || [])[i] || 0;
+const conta = l => !l.provisoria && !l.sem_entrada;            // entra no total da rede
+let DADOS = null, CALOR = "hoje";
+
+function variacao(atual, antes) {
+  if (!antes) return '<span class="sub">–</span>';
+  const p = Math.round(100 * (atual - antes) / antes);
+  return `<span class="${p >= 0 ? "sobe" : "desce"}">${p > 0 ? "+" : ""}${p}%</span>`;
+}
+
+// ---------- números de cada loja ----------
+function numeros(l, agoraH) {
+  const hist = l.historico || {}, dias = l.dias.map(d => d.dia), hoje = dias[dias.length - 1];
+  const ontem = dias[dias.length - 2], H = l.hoje_horas || {};
+  const ateAgora = (d) => Object.entries(hist[d] || {}).reduce((a, [h, x]) => a + (h <= agoraH ? x[0] : 0), 0);
+  const completos = l.dias.slice(0, -1).filter(d => d.iris > 0).slice(-7);
+  const media = completos.length ? Math.round(completos.reduce((a, d) => a + d.iris, 0) / completos.length) : 0;
+  const mesmoDia = l.dias.length >= 8 ? l.dias[l.dias.length - 8] : null;
+  let pico = null;
+  for (const h of HORAS) if (v(H, h, 0) && (!pico || v(H, h, 0) > v(H, pico, 0))) pico = h;
+  return {entraram: soma(H, 0), sairam: soma(H, 1), ontemAteAgora: ateAgora(ontem), ontem: (l.dias[l.dias.length - 2] || {}).iris || 0,
+          media, pico, picoN: pico ? v(H, pico, 0) : 0, semanaPassada: mesmoDia ? ateAgora(mesmoDia.dia) : 0};
+}
+
+function ponto(l) {
+  if (l.sem_entrada || l.provisoria) return '<span class="ponto cal"></span>';
+  return `<span class="ponto ${l.situacao.ok ? "" : "ruim"}"></span>`;
+}
+
+function selo(l) {
+  if (l.sem_entrada) return '<span class="selo">sem câmera na porta</span>';
+  if (l.provisoria) return '<span class="selo">em calibração</span>';
+  return "";
+}
+
+// ---------- visão geral da rede ----------
+function geral(d) {
+  const agoraH = d.agora.slice(11, 13) + ":00";
+  const L = d.lojas.map(l => ({l, n: numeros(l, agoraH)}));
+  const rede = L.filter(x => conta(x.l));
+  const tot = rede.reduce((a, x) => a + x.n.entraram, 0), totOntem = rede.reduce((a, x) => a + x.n.ontemAteAgora, 0);
+  const totSem = rede.reduce((a, x) => a + x.n.semanaPassada, 0);
+  const porHora = HORAS.map(h => rede.reduce((a, x) => a + v(x.l.hoje_horas, h, 0), 0));
+  const iPico = porHora.indexOf(Math.max(...porHora));
+  const lider = rede.slice().sort((a, b) => b.n.entraram - a.n.entraram)[0];
+  const operando = d.lojas.filter(l => l.situacao.ok).length;
+  const ranking = L.slice().sort((a, b) => (conta(b.l) - conta(a.l)) || (b.n.entraram - a.n.entraram)).map(({l, n}) =>
+    `<tr class="clicavel ${conta(l) ? "" : "fora"}" data-loja="${esc(l.loja)}">
+      <td>${ponto(l)}${esc(l.loja)}${selo(l)}</td><td><b>${fmt(n.entraram)}</b></td><td>${fmt(n.ontemAteAgora)}</td>
+      <td>${variacao(n.entraram, n.ontemAteAgora)}</td><td>${n.media ? fmt(n.media) : "–"}</td>
+      <td>${n.pico ? `${n.pico.slice(0, 2)}h (${n.picoN})` : "–"}</td><td>${fmt(n.ontem)}</td></tr>`).join("");
+  // 14 dias da rede
+  let dias = (d.lojas[0] || {dias: []}).dias.map(x => x.dia);
+  let porDia = dias.map(x => rede.reduce((a, r) => a + ((r.l.dias.find(y => y.dia === x) || {}).iris || 0), 0));
+  const inicio = Math.max(0, Math.min(porDia.findIndex(x => x > 0), dias.length - 1));   // sem os dias antes do Íris
+  dias = dias.slice(inicio); porDia = porDia.slice(inicio);
+  const maxD = Math.max(1, ...porDia);
+  const barrasDias = dias.map((x, i) => `<div class="hora" data-dica="${semana(x)} ${dia(x)} · ${fmt(porDia[i])} entradas">
+      <div class="barra ${i === dias.length - 1 ? "fim" : ""}" style="height:${porDia[i] / maxD * 100}%;position:relative"><b>${fmt(porDia[i])}</b></div></div>`).join("");
+  return `<section class="card">
+    <div class="cab"><h2>Visão geral da rede</h2>
+      <span class="sub">${operando} de ${d.lojas.length} câmeras em operação agora</span></div>
+    <div class="kpis">
+      <div class="kpi principal"><b>${fmt(tot)}</b><span>Entradas hoje (${rede.length} lojas)</span></div>
+      <div class="kpi"><b>${variacao(tot, totOntem)}</b><span>vs. ontem até ${agoraH.slice(0, 2)}h (${fmt(totOntem)})</span></div>
+      <div class="kpi"><b>${variacao(tot, totSem)}</b><span>vs. mesmo dia da semana passada</span></div>
+      <div class="kpi"><b>${porHora[iPico] ? HORAS[iPico].slice(0, 2) + "h" : "–"}</b><span>Hora de pico da rede${porHora[iPico] ? ` (${fmt(porHora[iPico])} entradas)` : ""}</span></div>
+      <div class="kpi"><b>${lider && lider.n.entraram ? esc(lider.l.loja) : "–"}</b><span>Loja com mais entradas hoje</span></div>
+    </div>
+    <div class="bloco"><div class="cab"><div class="titulo">Ranking das lojas · hoje</div>
+      <button class="botao" id="csv">Baixar CSV (BI)</button></div>
+      <div class="rolar"><table><tr><th>Loja</th><th>Hoje</th><th>Ontem até agora</th><th>Var.</th><th>Média 7 dias</th>
+        <th>Pico hoje</th><th>Ontem (dia todo)</th></tr>${ranking}</table></div></div>
+    <div class="bloco"><div class="cab"><div class="titulo">Mapa de calor · entradas por hora</div>
+      <div class="abas"><button data-calor="hoje" class="${CALOR === "hoje" ? "ativa" : ""}">Hoje</button>
+        <button data-calor="media" class="${CALOR === "media" ? "ativa" : ""}">Média 7 dias</button></div></div>
+      <div class="rolar">${calor(d)}</div></div>
+    <div class="bloco"><div class="titulo">Entradas da rede · últimos ${dias.length} dias</div>
+      <div class="grafico dias">${barrasDias}</div>
+      <div class="eixo dias">${dias.map(x => `<div>${semana(x)}<br>${dia(x)}</div>`).join("")}</div></div>
+  </section>`;
+}
+
+function calor(d) {
+  const linhas = d.lojas.map(l => {
+    let vals;
+    if (CALOR === "hoje") vals = HORAS.map(h => v(l.hoje_horas, h, 0));
+    else {
+      const ds = l.dias.slice(0, -1).filter(x => x.iris > 0).slice(-7).map(x => x.dia);
+      vals = HORAS.map(h => ds.length ? Math.round(ds.reduce((a, x) => a + v((l.historico || {})[x], h, 0), 0) / ds.length) : 0);
+    }
+    return {l, vals};
+  });
+  const max = Math.max(1, ...linhas.flatMap(x => x.vals));
+  const corpo = linhas.map(({l, vals}) => `<tr class="${conta(l) ? "" : "fora"}"><td>${esc(l.loja)}</td>${vals.map((x, i) =>
+    `<td class="q" title="${esc(l.loja)} · ${HORAS[i].slice(0, 2)}h · ${x}" style="background:rgba(var(--calor),${x ? (0.1 + 0.9 * x / max).toFixed(2) : 0.04});color:${x / max > 0.55 ? "#fff" : "inherit"}">${x || ""}</td>`).join("")}</tr>`).join("");
+  return `<table class="calor"><tr><th></th>${HORAS.map(h => `<th class="sub">${h.slice(0, 2)}h</th>`).join("")}</tr>${corpo}</table>`;
+}
+
+// ---------- detalhe de cada loja ----------
+function loja(l, agoraH) {
+  const H = l.hoje_horas, R = l.hoje_regua, temRegua = Object.keys(R).length > 0, n = numeros(l, agoraH);
+  const regua = soma(R, 0);
+  const max = Math.max(1, ...HORAS.map(h => Math.max(v(H, h, 0), v(H, h, 1), v(R, h, 0))));
+  const algum = HORAS.some(h => v(H, h, 0) || v(H, h, 1) || v(R, h, 0));
+  const barras = HORAS.map(h => {
+    const e = v(H, h, 0), s = v(H, h, 1), r = v(R, h, 0);
+    const dica = `${h.slice(0, 2)}h · entraram ${e} · saíram ${s}` + (temRegua ? ` · câmera intel. ${r}` : "");
+    return `<div class="hora" data-dica="${dica}"><div class="barra" style="height:${e / max * 100}%"></div>` +
+           `<div class="barra e" style="height:${s / max * 100}%"></div>` +
+           (temRegua ? `<div class="barra r" style="height:${r / max * 100}%"></div>` : "") + `</div>`;
+  }).join("");
+  const linhas = l.dias.slice(-7).reverse().map(d =>
+    `<tr><td>${semana(d.dia)} ${dia(d.dia)}</td><td>${fmt(d.iris)}</td>` +
+    (l.regua ? `<td>${d.regua == null ? "–" : fmt(d.regua)}</td>` : "") + `</tr>`).join("");
+  const s = l.situacao;
+  const img = l.visao_img || (l.visao && !PUBLICO ? `/iris/visao/${encodeURIComponent(l.loja)}.jpg?t=${Date.now()}` : "");
+  return `<details class="loja" id="loja-${esc(l.loja)}"${ABERTAS.has(l.loja) ? " open" : ""}>
+    <summary class="resumo"><div class="nome"><span class="seta">▸</span> ${esc(l.loja)}${selo(l)}<span class="fonte">${esc(l.fonte)}</span></div>
+      <div style="display:flex;gap:14px;align-items:center"><span class="num">${fmt(n.entraram)}</span>
+      <span class="status ${s.ok ? "" : "ruim"}"><i></i>${esc(s.texto)}</span></div></summary>
+    <div class="kpis">
+      <div class="kpi principal"><b>${fmt(n.entraram)}</b><span>Entraram hoje</span></div>
+      <div class="kpi"><b>${fmt(n.sairam)}</b><span>Saíram hoje</span></div>
+      <div class="kpi"><b>${variacao(n.entraram, n.ontemAteAgora)}</b><span>vs. ontem até esta hora</span></div>
+      <div class="kpi"><b>${n.media ? fmt(n.media) : "–"}</b><span>Média por dia (7 dias)</span></div>
+      ${temRegua ? `<div class="kpi"><b>${fmt(regua)}</b><span>Câmera inteligente (referência)</span></div>
+      <div class="kpi"><b>${regua ? Math.round(100 * Math.abs(n.entraram - regua) / regua) + "%" : "–"}</b><span>Diferença para a referência</span></div>` : ""}
+    </div>
+    ${l.sem_entrada ? `<div class="aviso">Esta loja ainda não tem câmera na porta: o número mostra movimento, não entradas, e fica fora do total da rede.</div>`
+      : l.provisoria ? `<div class="aviso">Porta em calibração automática: os números podem mudar depois do ajuste e ainda não entram no total da rede.</div>` : ""}
+    <div class="bloco"><div class="titulo">Movimento por hora · hoje</div>
+      <div class="grafico">${barras}${algum ? "" : '<div class="vazio-graf">Sem movimento registrado hoje até agora.</div>'}</div>
+      <div class="eixo">${HORAS.map(h => `<div>${h.slice(0, 2)}h</div>`).join("")}</div>
+      <div class="legenda"><span><i style="background:var(--marca)"></i>Entraram</span>
+        <span><i style="background:var(--marca2)"></i>Saíram</span>
+        ${temRegua ? '<span><i style="background:var(--regua)"></i>Câmera inteligente</span>' : ""}</div></div>
+    <div class="bloco baixo">
+      <div><div class="titulo">Últimos 7 dias</div>
+        <table><tr><th>Dia</th><th>Entraram</th>${l.regua ? "<th>Câmera intel.</th>" : ""}</tr>${linhas}</table></div>
+      <div class="visao"><div class="titulo">Imagem de conferência</div>${img
+        ? `<img src="${img}" alt="Imagem de conferência anonimizada" loading="lazy"><div class="nota">Atualizada em ${esc(l.visao)}. Cada pessoa detectada aparece marcada com um quadrado. Linha vermelha = porta.</div>`
+        : `<div class="vazio">Aguardando a próxima imagem. Ela é gerada automaticamente quando há movimento na porta.</div>`}</div>
+    </div></details>`;
+}
+
+// ---------- CSV para o BI (dia, hora, loja, entradas, saídas) ----------
+function baixarCsv() {
+  const linhas = [["dia", "hora", "loja", "entraram", "sairam", "entra_no_total"].join(";")];
+  for (const l of DADOS.lojas) {
+    for (const [d, hs] of Object.entries(l.historico || {}).sort())
+      for (const [h, x] of Object.entries(hs).sort())
+        linhas.push([d, h, l.loja, x[0] || 0, x[1] || 0, conta(l) ? "sim" : "nao"].join(";"));
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + linhas.join("\r\n")], {type: "text/csv;charset=utf-8"}));
+  a.download = `iris_fluxo_${DADOS.agora.slice(6, 10)}${DADOS.agora.slice(3, 5)}${DADOS.agora.slice(0, 2)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+const ABERTAS = new Set();
+let VERSAO = null;
+function mostrar(d) {
+  if (d.versao_pagina) {                       // visual novo publicado: recarrega a página sozinha
+    if (VERSAO && d.versao_pagina !== VERSAO) { location.reload(); return; }
+    VERSAO = d.versao_pagina;
+  }
+  DADOS = d;
+  document.querySelectorAll("details.loja").forEach(x => x.open ? ABERTAS.add(x.id.slice(5)) : ABERTAS.delete(x.id.slice(5)));
+  if (d.lojas.length === 1) ABERTAS.add(d.lojas[0].loja);
+  document.getElementById("entrar").hidden = true;
+  document.getElementById("lojas").hidden = false;
+  document.getElementById("rodape").hidden = false;
+  document.getElementById("agora").textContent = "Atualizado em " + d.agora;
+  const agoraH = d.agora.slice(11, 13) + ":00";
+  document.getElementById("lojas").innerHTML = d.lojas.length
+    ? geral(d) + '<div class="titulo" style="margin:6px 4px -6px">Lojas · toque para ver o detalhe</div>' + d.lojas.map(l => loja(l, agoraH)).join("")
+    : '<div class="vazio">Nenhuma loja configurada.</div>';
+}
+
+document.getElementById("lojas").addEventListener("click", ev => {
+  const aba = ev.target.closest("[data-calor]");
+  if (aba) { CALOR = aba.dataset.calor; mostrar(DADOS); return; }
+  if (ev.target.closest("#csv")) { baixarCsv(); return; }
+  const tr = ev.target.closest("tr[data-loja]");
+  if (tr) {
+    const det = document.getElementById("loja-" + tr.dataset.loja);
+    if (det) { det.open = true; det.scrollIntoView({behavior: "smooth", block: "start"}); }
+  }
+});
+
+// ---------- site público: dados criptografados, abre com a senha ----------
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+let SENHA = null;
+try { SENHA = localStorage.getItem("iris_senha"); } catch (e) {}
+
+async function abrir(senha) {
+  const p = await (await fetch("dados.enc.json?t=" + Date.now(), {cache: "no-store"})).json();
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(senha), "PBKDF2", false, ["deriveKey"]);
+  const chave = await crypto.subtle.deriveKey({name: "PBKDF2", hash: "SHA-256", salt: b64(p.sal), iterations: p.voltas},
+                                             base, {name: "AES-GCM", length: 256}, false, ["decrypt"]);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name: "AES-GCM", iv: b64(p.iv)}, chave, b64(p.ct))));
+}
+
+async function carregar() {
+  try {
+    if (!PUBLICO) return mostrar(await (await fetch("/api/iris", {cache: "no-store"})).json());
+    if (!SENHA) { document.getElementById("entrar").hidden = false; return; }
+    mostrar(await abrir(SENHA));
+    document.getElementById("sair").hidden = false;
+  } catch (e) {
+    if (PUBLICO && e && e.name === "OperationError") {            // senha errada
+      SENHA = null;
+      try { localStorage.removeItem("iris_senha"); } catch (x) {}
+      document.getElementById("entrar").hidden = false;
+      document.getElementById("lojas").hidden = true;
+      document.getElementById("erro").textContent = "Senha incorreta.";
+    } else {
+      document.getElementById("agora").textContent = "Sem conexão no momento. Nova tentativa em instantes.";
+    }
+  }
+}
+
+document.getElementById("form").addEventListener("submit", ev => {
+  ev.preventDefault();
+  SENHA = document.getElementById("senha").value;
+  document.getElementById("erro").textContent = "";
+  if (document.getElementById("lembrar").checked) { try { localStorage.setItem("iris_senha", SENHA); } catch (e) {} }
+  carregar();
+});
+document.getElementById("sair").addEventListener("click", () => {
+  try { localStorage.removeItem("iris_senha"); } catch (e) {}
+  location.reload();
+});
+carregar();
+setInterval(carregar, PUBLICO ? 120000 : 60000);
+if (!PUBLICO) setInterval(() => document.querySelectorAll(".visao img").forEach(i => i.src = i.src.replace(/t=\d+/, "t=" + Date.now())), 15000);
+</script>
+</body>
+</html>
